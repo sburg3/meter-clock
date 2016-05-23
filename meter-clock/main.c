@@ -79,7 +79,7 @@ int main(void)
 	
 	//Set up timer for pwm
 	//fast pwm, non inverting. Sets pin oc0b, for hours
-	TCCR0A = _BV(COM0B1) | _BV(WGM01) | _BV(WGM00); //com0b = 10, wgm = 111
+	TCCR0A = _BV(COM0B1) | _BV(WGM02) | _BV(WGM00); //com0b = 10, wgm = 111
 	TCCR0B = _BV(CS00) | _BV(CS01) | _BV(WGM02);//clock div is 64
 	OCR0A = 12; //top of pwm
 	OCR0B = 6; //set 50%
@@ -89,7 +89,7 @@ int main(void)
 	OCR1A = 30; //set both pwm to 50%
 	OCR1B = 30;
 	TCCR1A = _BV(COM1A1) | _BV(COM1B1) | _BV(WGM11); //com1a = com1b = 10 for non inverting
-	TCCR1B = _BV(CS11) | _BV(WGM13) | _BV(WGM12); //WGM = 1110 for fast pwm with icr as top, CS = 010 so clock div is 8
+	TCCR1B = _BV(CS11) | _BV(WGM13);//| _BV(WGM12); //WGM = 1110 for fast pwm with icr as top, CS = 010 so clock div is 8
 	
 	//Set pwm as outputs
 	DDRB |= _BV(PORTB1) | _BV(PORTB2); //pb1 is oc1a is minutes. pb2 is oc1b is seconds
@@ -278,7 +278,7 @@ char bin_to_bcd(char in)
 
 void set_leds(char led1, char led2)
 {
-	if (led1 == 0)
+	if (led1)
 	{
 		PORTD |= _BV(LED1_PORT);
 	}
@@ -287,7 +287,7 @@ void set_leds(char led1, char led2)
 		PORTD &= ~_BV(LED1_PORT);
 	}
 	
-	if (led2 == 0)
+	if (led2)
 	{
 		PORTD |= _BV(LED2_PORT);
 	}
