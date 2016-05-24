@@ -45,10 +45,6 @@ void set_leds(char,char);
 volatile char sec;
 volatile char min;
 volatile char hrs;
-//volatile char dow;
-//volatile char date;
-//volatile char month;
-//volatile char year;
 volatile char ctl;
 
 //Order that clock is set
@@ -89,7 +85,7 @@ int main(void)
 	OCR1A = 30; //set both pwm to 50%
 	OCR1B = 30;
 	TCCR1A = _BV(COM1A1) | _BV(COM1B1) | _BV(WGM11); //com1a = com1b = 10 for non inverting
-	TCCR1B = _BV(CS11) | _BV(WGM13);//| _BV(WGM12); //WGM = 1110 for fast pwm with icr as top, CS = 010 so clock div is 8
+	TCCR1B = _BV(CS11) | _BV(WGM13); //WGM = 1110 for fast pwm with icr as top, CS = 010 so clock div is 8
 	
 	//Set pwm as outputs
 	DDRB |= _BV(PORTB1) | _BV(PORTB2); //pb1 is oc1a is minutes. pb2 is oc1b is seconds
@@ -98,24 +94,13 @@ int main(void)
 	debounce_init();
 	sei();
 	
-	//Set up SPI
-	//B5 - SCK, B4 - MISO, B3 - MOSI, B2 - /SS
-	//DDRB |= _BV(DDB5) | _BV(DDB3) | _BV(DDB2);
-	//SPCR |= _BV(SPE) | _BV(MSTR);
-	
 	//Set up I2C
 	i2c_init();
 	
 	//Initialize RTC
 	read_rtc();
 	config_rtc();
-	
-	//Initialize LED Driver
-	//write_spi(DRV_LIMIT, 0x05);
-	//write_spi(DRV_MODE, 0xFF);
-	//write_spi(DRV_INTENSITY, intens);
-	//write_spi(DRV_ENA, 0x01);
-	
+
 	while (1)
 	{
 		//Process button inputs
@@ -229,10 +214,6 @@ void write_rtc(void)
 	i2c_write(sec);
 	i2c_write(min);
 	i2c_write(hrs);
-	//i2c_write(dow);
-	//i2c_write(date);
-	//i2c_write(month);
-	//i2c_write(year);
 	i2c_stop();
 }
 
@@ -244,10 +225,6 @@ void read_rtc(void)
 	sec = i2c_readAck();
 	min = i2c_readAck();
 	hrs = i2c_readNak();
-	//dow = i2c_readAck();
-	//date = i2c_readAck();
-	//month = i2c_readAck();
-	//year = i2c_readNak();
 	i2c_stop();
 }
 
