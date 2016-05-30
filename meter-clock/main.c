@@ -56,6 +56,9 @@ volatile enum set_order cur_set = Meter_Cal;
 enum modes {Run, Set};
 volatile enum modes cur_mode = Set;
 
+//Control alternate display of meters (min and sec vs hr and min)
+volatile char is_alt = 0;
+
 ISR(TIMER2_OVF_vect)
 {
 	debounce();
@@ -77,8 +80,8 @@ int main(void)
 	//fast pwm, non inverting. Sets pin oc0b, for hours
 	TCCR0A = _BV(COM0B1) | _BV(WGM02) | _BV(WGM00); //com0b = 10, wgm = 111
 	TCCR0B = _BV(CS00) | _BV(CS01) | _BV(WGM02);//clock div is 64
-	OCR0A = 12; //top of pwm
-	OCR0B = 6; //set 50%
+	OCR0A = 60; //top of pwm
+	OCR0B = 30; //set 50%
 	
 	//fast pwm, non inverting. oc1a is mins, oc1b is secs.
 	ICR1 = 0x003C; //top = 60
@@ -134,6 +137,18 @@ int main(void)
 			{
 				btn_cnt++;
 			}
+			else if (cur_mode == Run)
+			{
+				if (is_alt)
+				{
+					is_alt = 0;
+				}
+				else
+				{
+					is_alt = 1;
+				}
+			}
+			
 		}
 		
 		//User decrements value
@@ -150,14 +165,15 @@ int main(void)
 		{
 			read_rtc();
 			update_pwm();
-			if ((sec & 1) == 1)
-			{
-				set_leds(1,0);
-			}
-			else
-			{
-				set_leds(0,1);
-			}
+			//if ((sec & 1) == 1)
+			//{
+				//set_leds(1,0);
+			//}
+			//else
+			//{
+				//set_leds(0,1);
+			//}
+			set_leds(0,0);
 		}
 		else
 		{
@@ -165,7 +181,7 @@ int main(void)
 			{
 				case Meter_Cal:
 				//Set all meters to 50% for pot adjustment
-				OCR0B = 6;
+				OCR0B = 30;
 				OCR1A = 30;
 				OCR1B = 30;
 				set_leds(1,1);
@@ -230,11 +246,29 @@ void read_rtc(void)
 
 void update_pwm(void)
 {
+	char hr_val;
+	char min_val;
+	
+	//alternate display: show minutes on hour meter, seconds on minute meter
+	//used for clock with two meters
+	if (is_alt)
+	{
+		hr_val = (((RTC_10MIN_MASK & min) >> 4) * 10) + (RTC_MIN_MASK & min);
+		min_val = (((RTC_10SEC_MASK & sec) >> 4) * 10) + (RTC_SEC_MASK & sec);
+	}
+	//regular operation
+	else
+	{
+		hr_val = (((RTC_10HR_MASK & hrs) >> 4) * 10) + (RTC_HR_MASK & hrs);
+		hr_val = hr_val * 5;
+		min_val = (((RTC_10MIN_MASK & min) >> 4) * 10) + (RTC_MIN_MASK & min);
+	}
+	
 	//Update hours
-	OCR0B = (((RTC_10HR_MASK & hrs) >> 4) * 10) + (RTC_HR_MASK & hrs);
+	OCR0B = hr_val;
 	
 	//Update minutes
-	OCR1A = (((RTC_10MIN_MASK & min) >> 4) * 10) + (RTC_MIN_MASK & min);
+	OCR1A = min_val;
 	
 	//Update seconds
 	OCR1B = (((RTC_10SEC_MASK & sec) >> 4) * 10) + (RTC_SEC_MASK & sec);
